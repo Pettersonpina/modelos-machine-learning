@@ -1,0 +1,99 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, classification_report
+from google.colab import files
+
+class Modelo():
+    def __init__(self):
+        self.df = None
+        self.model_svm = None
+        self.model_rf = None
+        self.X_train, self.X_test, self.y_train, self.y_test = None, None, None, None
+
+    def CarregarDataset(self):
+        """
+        Abre uma janela para o usuário carregar um arquivo CSV no Google Colab.
+        """
+        uploaded = files.upload()  # Abre a janela de upload de arquivo
+        for filename in uploaded.keys():
+            # Carrega o dataset após o upload
+            path = filename
+            names = ['SepalLengthCm', 'SepalWidthCm', 'PetalLengthCm', 'PetalWidthCm', 'Species']
+            self.df = pd.read_csv(path, names=names)
+            print("Dataset carregado com sucesso!")
+
+    def TratamentoDeDados(self):
+        """
+        Realiza o pré-processamento dos dados carregados.
+        """
+        # Remover possíveis valores nulos
+        self.df.dropna(inplace=True)
+
+        # Mapear os nomes das espécies para valores numéricos
+        species_mapping = {'Iris-setosa': 0, 'Iris-versicolor': 1, 'Iris-virginica': 2}
+        self.df['Species'] = self.df['Species'].map(species_mapping)
+
+        # Separar recursos (features) e alvo (target)
+        X = self.df[['SepalLengthCm', 'SepalWidthCm', 'PetalLengthCm', 'PetalWidthCm']]
+        y = self.df['Species']
+
+        # Dividir o conjunto em treino e teste
+        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+        print("Dados pré-processados e divididos em treino e teste.")
+
+    def Treinamento(self):
+        """
+        Treina os modelos de machine learning.
+        """
+        # Treinar um modelo SVM
+        self.model_svm = SVC(kernel='linear', random_state=42)
+        self.model_svm.fit(self.X_train, self.y_train)
+
+        # Treinar um modelo Random Forest
+        self.model_rf = RandomForestClassifier(random_state=42)
+        self.model_rf.fit(self.X_train, self.y_train)
+
+        print("Modelos treinados com sucesso!")
+
+    def Teste(self):
+        """
+        Avalia o desempenho dos modelos treinados nos dados de teste.
+        """
+        # Testar modelo SVM
+        predictions_svm = self.model_svm.predict(self.X_test)
+        accuracy_svm = accuracy_score(self.y_test, predictions_svm)
+        print("\nDesempenho do Modelo SVM:")
+        print(f"Acurácia: {accuracy_svm:.2f}")
+        print(classification_report(self.y_test, predictions_svm, target_names=['Setosa', 'Versicolor', 'Virginica']))
+
+        # Testar modelo Random Forest
+        predictions_rf = self.model_rf.predict(self.X_test)
+        accuracy_rf = accuracy_score(self.y_test, predictions_rf)
+        print("\nDesempenho do Modelo Random Forest:")
+        print(f"Acurácia: {accuracy_rf:.2f}")
+        print(classification_report(self.y_test, predictions_rf, target_names=['Setosa', 'Versicolor', 'Virginica']))
+
+        # Comparação entre os modelos
+        print("\nComparação entre os Modelos:")
+        if accuracy_svm > accuracy_rf:
+            print("O modelo SVM apresentou melhor acurácia.")
+        elif accuracy_rf > accuracy_svm:
+            print("O modelo Random Forest apresentou melhor acurácia.")
+        else:
+            print("Ambos os modelos apresentaram a mesma acurácia.")
+
+    def Train(self):
+        """
+        Executa todo o pipeline de treinamento e teste.
+        """
+        self.CarregarDataset()
+        if self.df is not None:
+            self.TratamentoDeDados()
+            self.Treinamento()
+            self.Teste()
+
+# Instanciar a classe e executar o pipeline
+modelo = Modelo()
+modelo.Train()
